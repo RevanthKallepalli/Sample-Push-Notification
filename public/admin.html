@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Admin — Send Parking Alert</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 32px; }
+    button { font-size: 16px; padding: 12px 18px; border-radius: 8px; cursor: pointer; }
+    .danger { background:#c23; color:white; border:none; }
+    .ok { background:#2b8; color:white; border:none; margin-left:8px; }
+    pre { background:#f4f4f4; padding:12px; border-radius:6px; max-width:900px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>Admin: Broadcast Parking Alert</h1>
+
+  <label>
+    Parking ID (optional):
+    <input id="parkingId" placeholder="PARK-1234" />
+  </label>
+  <br/><br/>
+  <label>
+    Message override (optional):
+    <input id="message" placeholder="Custom message to send" style="width:60%" />
+  </label>
+  <br/><br/>
+  <button id="sendBtn">Send Parking Alert to All</button>
+  <button id="clearBtn" class="danger">Clear all subscriptions</button>
+  <div style="margin-top:16px;">
+    <strong>Result:</strong>
+    <pre id="result">No action taken yet.</pre>
+  </div>
+
+  <script>
+    async function postJson(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+      return res.json();
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const parkingId = document.getElementById('parkingId').value || null;
+      const message = document.getElementById('message').value || null;
+      document.getElementById('result').textContent = 'Sending...';
+      try {
+        const resp = await postJson('/admin/send-all', { parkingId, message });
+        document.getElementById('result').textContent = JSON.stringify(resp, null, 2);
+      } catch (e) {
+        document.getElementById('result').textContent = 'Error: ' + e.message;
+      }
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', async () => {
+      if (!confirm('Remove ALL subscriptions from the server? This cannot be undone easily.')) return;
+      document.getElementById('result').textContent = 'Clearing...';
+      try {
+        const resp = await postJson('/admin/clear-all');
+        document.getElementById('result').textContent = JSON.stringify(resp, null, 2);
+      } catch (e) {
+        document.getElementById('result').textContent = 'Error: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>

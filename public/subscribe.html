@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Push Subscribe</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,sans-serif;padding:28px;}
+    button{padding:12px 18px;border-radius:8px;font-size:16px;cursor:pointer}
+    .ok{background:#2b8;color:white;border:none}
+  </style>
+</head>
+<body>
+  <h1>Subscribe to Push</h1>
+  <p>This page will register a Service Worker, ask for Notifications permission, and POST the subscription to <code>/subscribe</code>.</p>
+  <button id="subscribeBtn" class="ok">Subscribe for Push</button>
+  <p id="status"></p>
+
+  <script>
+    // Replace with the same public VAPID key used in your server.js
+    const PUBLIC_VAPID_KEY = 'BGA3DeqFQ5KavZqM2ykl9dqlvuYTFXon5dsItS4SQoWvFgJXq_G1Dcfz7Vd_wLAW9Fv8RcuVtrKri3SCPwm5iOw';
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      return new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    const status = (s) => { document.getElementById('status').textContent = s; };
+
+    document.getElementById('subscribeBtn').addEventListener('click', async () => {
+      if (!('serviceWorker' in navigator)) return status('Service workers not supported in this browser.');
+      try {
+        status('Registering service worker...');
+        const reg = await navigator.serviceWorker.register('/sw.js'); // ensure sw.js is at /public/sw.js
+        status('Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return status('Notification permission denied.');
+
+        status('Subscribing to push manager...');
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+        });
+
+        status('Sending subscription to server...');
+        const resp = await fetch('/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sub)
+        });
+
+        const json = await resp.json();
+        if (json && json.success) {
+          status('Subscribed successfully! Server saved the subscription.');
+        } else {
+          status('Server responded: ' + JSON.stringify(json));
+        }
+      } catch (err) {
+        console.error(err);
+        status('Error: ' + (err.message || err));
+      }
+    });
+  </script>
+</body>
+</html>

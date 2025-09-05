@@ -1,0 +1,19 @@
+{
+  "name": "push-sample",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "p-limit": "^2.3.0",
+    "web-push": "^3.6.7",
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}
